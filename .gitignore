@@ -1,0 +1,10 @@
+.env
+venv
+### Django ###
+*.log
+*.pot
+*.pyc
+__pycache__/
+media
+celerybeat-schedule
+.idea
