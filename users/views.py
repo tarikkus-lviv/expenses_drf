@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -15,7 +15,8 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     pagination_class = StandardResultsSetPagination
     serializer_class = UserRegisterSerializer
-    permission_classes = (IsCurrentUserOrAdmin,)
+    # permission_classes = (IsCurrentUserOrAdmin,)
+    permission_classes = (permissions.IsAuthenticated,)
     token_generator = default_token_generator
 
     def list(self, request, *args, **kwargs):

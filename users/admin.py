@@ -53,13 +53,14 @@ class UserAdmin(UA):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ['id', 'role', 'full_name', 'email', 'phone_number', 'image', 'is_active', 'is_draft']
+    list_display = ['id', 'role', 'full_name', 'email', 'phone_number', 'image', 'is_active', 'is_draft',
+                    'is_receiving_notifications']
 
     fieldsets = (
         (None, {'fields': ('password',)}),
         ('Personal info',
          {'fields': ('full_name', 'email', 'phone_number')}),
-        ('Permissions', {'fields': (('role', 'is_active', 'is_draft'),)}),
+        ('Permissions', {'fields': (('role', 'is_active', 'is_draft', 'is_receiving_notifications'),)}),
         ('Important dates', {'fields': (('last_login', 'created'),)}),
     )
     ordering = ['-created']

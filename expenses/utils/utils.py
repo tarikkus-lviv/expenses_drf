@@ -112,6 +112,11 @@ class UserPasswordChangedEmailFactory(UserEmailFactoryBase):
     plain_body_template_name = 'password_changed_email_body.html'
 
 
+class ExpensesReminderEmailFactory(UserEmailFactoryBase):
+    subject_template_name = 'reminder_email_subject.html'
+    plain_body_template_name = 'reminder_email_body.html'
+
+
 class ActionViewMixin(object):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

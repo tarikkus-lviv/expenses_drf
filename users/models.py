@@ -46,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField('active', default=False)
     is_draft = models.BooleanField('draft', default=False)
     is_staff = models.BooleanField('staff', default=False)
+    is_receiving_notifications = models.BooleanField('receive notifications', default=True)
 
     USERNAME_FIELD = 'email'
 

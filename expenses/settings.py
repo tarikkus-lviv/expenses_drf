@@ -13,6 +13,7 @@ import datetime
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
 from environs import Env
 
 env = Env()
@@ -20,7 +21,6 @@ env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -33,12 +33,12 @@ DEBUG = env.bool("DEBUG")
 
 ALLOWED_HOSTS = ["*", ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
     'expenses_api',
     'users',
+    'notifications',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -80,7 +81,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'expenses.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
@@ -97,7 +97,6 @@ DATABASES = {
         # 'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -127,19 +126,19 @@ AUTH_PASSWORD_VALIDATORS = CUSTOM_PASSWORD_VALIDATORS
 
 JWT_AUTH = {
     'JWT_ENCODE_HANDLER':
-    'rest_framework_jwt.utils.jwt_encode_handler',
+        'rest_framework_jwt.utils.jwt_encode_handler',
 
     'JWT_DECODE_HANDLER':
-    'rest_framework_jwt.utils.jwt_decode_handler',
+        'rest_framework_jwt.utils.jwt_decode_handler',
 
     'JWT_PAYLOAD_HANDLER':
-    'rest_framework_jwt.utils.jwt_payload_handler',
+        'rest_framework_jwt.utils.jwt_payload_handler',
 
     'JWT_PAYLOAD_GET_USER_ID_HANDLER':
-    'rest_framework_jwt.utils.jwt_get_user_id_from_payload_handler',
+        'rest_framework_jwt.utils.jwt_get_user_id_from_payload_handler',
 
     'JWT_RESPONSE_PAYLOAD_HANDLER':
-    'rest_framework_jwt.utils.jwt_response_payload_handler',
+        'rest_framework_jwt.utils.jwt_response_payload_handler',
 
     'JWT_SECRET_KEY': SECRET_KEY,
     'JWT_GET_USER_SECRET_KEY': None,
@@ -158,7 +157,6 @@ JWT_AUTH = {
 
     'JWT_AUTH_HEADER_PREFIX': 'JWT',
 }
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -226,7 +224,6 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'Expenses <' + EMAIL_HOST_USER + '>'
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
@@ -239,7 +236,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
@@ -255,17 +251,34 @@ STATICFILES_DIRS = (
 )
 FILE_UPLOAD_MAX_MEMORY_SIZE = 157286400
 
+REDIS_PORT = 6379
+REDIS_HOST = env('REDIS_PORT_6379_TCP_ADDR', 'redis')
 
 # CELERY SETTINGS
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60
+ACCEPT_CONTENT = ['json', 'msgpack']
+TASK_SERIALIZER = 'json'
 
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379')
 
+CELERY_BROKER_POOL_LIMIT = 1
+CELERY_BROKER_TRANSPORT_OPTIONS = {}
 CELERY_BEAT_SCHEDULE = {
-    "due-dates": {
-        "task": "expenses_api.tasks.create_category",
-        "schedule": 10
+    "email_reminder": {
+        "task": "expenses_api.tasks.email_reminder",
+        # "schedule": crontab(minute='*/1') #every minute
+        "schedule": crontab(minute=0, hour=20)  # every day at 20:00
     }
+}
+
+# CHANNELS
+ASGI_APPLICATION = "expenses.asgi.application"
+CHANNEL_LAYERS = {
+    'default': {
+        # 'BACKEND': 'notifications.channels_redis.RedisChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
 }

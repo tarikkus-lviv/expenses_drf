@@ -35,4 +35,6 @@ urlpatterns = [
     path('api/', include(users_router.urls)),
 
     path('api-token-', include(jwt_patterns)),
+
+    path('chat/', include('notifications.urls')),
 ]
